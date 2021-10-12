@@ -1,3 +1,4 @@
+const { response } = require("express");
 const path = require("path");
 const methodNotAllowed = require("../errors/errorHandler")
 
@@ -11,7 +12,7 @@ function scan(req,res,next){
       if(dish.id == dishId)return dish
   })
   if(!foundDish) next({status: 404, message: dishId})
-    
+  res.locals.dish = foundDish;  
   next();
 }
 
@@ -54,12 +55,7 @@ function add(req,res){
 
 //function that reads dish array and returns a dish if one is found, otherwise return 404
 function read(req, res, next){
-  const {dishId} = req.params;
-  const foundDish = dishes.find(current => {
-    if(current.id == Number(dishId)){
-      return current
-    }
-  })
+  const foundDish = res.locals.dish;
   if(foundDish)res.status(200).json({data: foundDish})
   next({status: 404, message: dishId})
 } 
@@ -76,11 +72,7 @@ function update(req,res,next){
   if(dishId != id && id){
     next({status: 400, message: `id: ${id}`})
   }
-  const foundDish = dishes.find(dish => {
-    if(dish.id == dishId){
-      return dish;
-    }
-  })
+  const foundDish = res.locals.dish;
   foundDish.name = name;
   foundDish.description = description;
   foundDish.image_url = image_url;
@@ -91,7 +83,7 @@ function update(req,res,next){
 module.exports = {
     list,
     create: [checksForBody, add],
-    read,
+    read : [scan, read],
     update: [scan,checksForBody,update],
 };
     

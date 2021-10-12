@@ -55,11 +55,11 @@ function add(req,res){
 //scans through dishes to check if the dish parameter exists in the database
 function scan(req,res,next){
   const {orderId} = req.params;
-  const foundDish = orders.find(order => {
+  const foundOrder = orders.find(order => {
       if(order.id == orderId)return order
   })
-  if(!foundDish) next({status: 404, message: orderId})
-    
+  if(!foundOrder) next({status: 404, message: orderId})
+  res.locals.order = foundOrder;  
   next();
 }
 
@@ -70,11 +70,7 @@ function update(req,res,next){
   if(orderId != id && id){
     next({status: 400, message: `id: ${id}`})
   }
-  const foundOrder = orders.find(order => {
-    if(order.id == orderId){
-      return order;
-    }
-  })
+  const foundOrder = res.locals.order;
   foundOrder.deliverTo = deliverTo;
   foundOrder.mobileNumber = mobileNumber;
   foundOrder.status = status;
@@ -85,9 +81,7 @@ function update(req,res,next){
 //fetches a order from the database 
 function read(req,res,next){
   const {orderId} = req.params;
-  const foundOrder = orders.find(order => {
-    if(orderId == order.id)return order
-  })
+  const foundOrder = res.locals.order;
   if(foundOrder) res.status(200).json({data: foundOrder})
   next({status: 404, message: "Dish ID not found."})
 }
@@ -117,7 +111,7 @@ function destroy(req,res,next){
 
 module.exports = {
   list,
-  read,
+  read: [scan, read],
   create: [checksBody, add],
   update: [scan, checksBody, update],
   delete: destroy
